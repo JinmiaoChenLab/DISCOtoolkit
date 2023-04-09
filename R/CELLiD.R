@@ -8,6 +8,7 @@
 #' @param n.predict Number of predicted cell type. Maximum value is 3
 #' @param ref.path Specify the file path to save the downloaded reference data.
 #' @param ncores Number of core used for CELLiD
+#' @export
 #' @importFrom pbmcapply pbmclapply
 #' @importFrom stringr str_match
 CELLiDCluster <- function(rna, ref.data = NULL, ref.deg = NULL, atlas = NULL, n.predict = 1, verbose = T, ref.path = NULL, ncores = 10) {
@@ -55,7 +56,7 @@ CELLiDCluster <- function(rna, ref.data = NULL, ref.deg = NULL, atlas = NULL, n.
     warning("The input data and reference dataset have a limited number of overlapping genes, which may potentially impact the accuracy of the CELLiD.")
   }
 
-  rna = rna[genes, ]
+  rna = rna[genes, ,drop=F]
   ref.data = ref.data[genes, ]
 
   # Initial round of prediction
@@ -63,7 +64,7 @@ CELLiDCluster <- function(rna, ref.data = NULL, ref.deg = NULL, atlas = NULL, n.
     1:ncol(rna), function(j) {
       predicted = as.numeric(
         apply(ref.data, 2, function(i) {
-          cor(as.numeric(i), as.numeric(rna[, j]), method = "spearman", use="complete.obs")
+          cor(as.numeric(i)[which(rna[,j] > 0)], as.numeric(rna[which(rna[,j] > 0), j]), method = "spearman", use="complete.obs")
         })
       )
       return(predicted)
@@ -83,6 +84,7 @@ CELLiDCluster <- function(rna, ref.data = NULL, ref.deg = NULL, atlas = NULL, n.
     1:ncol(rna), function(i) {
       ref = ref.data[,ct[[i]]]
       g = unique(ref.deg$gene[which(ref.deg$group %in% colnames(ref))])
+      g = intersect(rownames(ref), g)
       ref = ref[g,]
       input = rna[g,i]
       predict = apply(ref, 2, function(i) {
@@ -112,6 +114,7 @@ CELLiDCluster <- function(rna, ref.data = NULL, ref.deg = NULL, atlas = NULL, n.
 #' @param reference Reference geneset If not specified, reference geneset will be downloaded from the DISCO database.
 #' @param ref.path Specify the file path to save the downloaded reference geneset data.
 #' @param ncores Number of core used for CELLiD
+#' @export
 CELLiDEnrichment <- function(input, reference = NULL, ref.path = NULL, ncores = 10){
   # check input data
   if (!(is.data.frame(input))) {
