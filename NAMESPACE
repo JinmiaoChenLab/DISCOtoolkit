@@ -2,9 +2,12 @@
 
 export(CELLiDCluster)
 export(CELLiDEnrichment)
+export(DownloadDiscoData)
+export(FilterDiscoMetadata)
 export(FindCellType)
 export(GetCellTypeChildren)
-export(GetSampleMetadata)
+export(GetDiscoMetadata)
 importFrom(jsonlite,fromJSON)
 importFrom(pbmcapply,pbmclapply)
 importFrom(stringr,str_match)
+importFrom(tools,md5sum)

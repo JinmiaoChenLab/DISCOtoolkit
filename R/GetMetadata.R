@@ -1,28 +1,113 @@
+
 #' Cluster-level cell type prediction
 #'
-#' @param rna A data.frame or matrix with genes listed as row names
-#' @param ref.data Reference gene expression. If not specified, reference gene
-#' expression data will be downloaded from the DISCO database.
-#' @param ref.deg DEG list.
-#' @param atlas Specify the atlas. If not specified, CELLiD will use all data.
-#' @param n.predict Number of predicted cell type. Maximum value is 3
-#' @param ref.path Specify the file path to save the downloaded reference data.
-#' @param ncores Number of core used for CELLiD
+#' @param project project ID(s) of interest, can be a string or vector
+#' @param tissue tissue(s) of interest, can be a string or vector
+#' @param disease disease(s) of interest, can be a string or vector
+#' @param sample.type sample type(s) of interest, can be a string or vector
+#' @param cell.type cell type(s) of interest, can be a string or vector
+#' @param include.cell.type.children Whether the cell type is an exact match or includes its child elements
+#' @param min.cell.per.sample Only samples with a cell count greater than the minimum cell count per sample will be retained.
 #' @export
 #' @importFrom jsonlite fromJSON
-GetSampleMetadata <- function(project = NULL, tissue = NULL, disease = NULL, sample.type = NULL, cell.type = NULL) {
+FilterDiscoMetadata <- function(project = NULL, tissue = NULL, disease = NULL, sample.type = NULL, cell.type = NULL,
+                                include.cell.type.children = T, min.cell.per.sample = 100) {
 
-  tryCatch({
-    message("Retrieving metadata from DISCO database")
-    meta = fromJSON("https://immunesinglecell.org/toolkitapi/getSampleCtInfo")
-  }, error = function(e){
-    stop("Failed to retrieve metadata. Please try again. If the issue persists, please contact us at li_mengwei@immunol.a-star.edu.sg for assistance.")
-  })
+  filter.data = list(
+    sample.metadata = NULL,
+    cell.type.metadata = NULL,
+    sample.count = NULL,
+    cell.count = NULL,
+    filter =  list(
+      project = project, tissue = tissue, disease = disease, sample.type = sample.type, cell.type = cell.type,
+       include.cell.type.children = include.cell.type.children, min.cell.per.sample = min.cell.per.sample
+    )
+  )
 
-  message("Filtering metadata")
+  metadata = GetDiscoMetadata()
 
+  message("Filtering sample")
+  if (is.null(project) == F) {
+    metadata = metadata[which(metadata$projectId %in% project),]
+  }
+
+  if (is.null(tissue) == F) {
+    metadata = metadata[which(metadata$tissue %in% tissue),]
+  }
+
+  if (is.null(disease) == F) {
+    metadata = metadata[which(metadata$disease %in% disease),]
+  }
+
+  if (is.null(sample.type) == F) {
+    metadata = metadata[which(metadata$sampleType %in% sample.type),]
+  }
+
+  if (nrow(metadata) == 0) {
+    stop("Sorry, no samples passed the applied filters.")
+  }
+
+  sample.ct.info = GetSampleCtInfo()
+
+
+  retain.field = c("sampleId", "projectId", "sampleType", "anatomicalSite", "disease",
+                   "tissue", "platform", "ageGroup", "age", "gender", "cellSorting",
+                   "diseaseSubtype", "diseaseStage", "treatment", "md5")
+  metadata = metadata[,retain.field]
+
+  if (is.null(cell.type)) {
+
+    sample.ct.info = sample.ct.info[which(sample.ct.info$sampleId %in% metadata$sampleId),]
+    sample.cell.count = aggregate(sample.ct.info$cellNumber, by=list(sample=sample.ct.info$sampleId), FUN=sum)
+    rownames(sample.cell.count) = sample.cell.count$sample
+    metadata$cell.number = sample.cell.count[rownames(metadata),"x"]
+
+    metadata = metadata[which(metadata$cell.number > min.cell.per.sample),]
+    if (nrow(metadata) == 0) {
+      stop("Sorry, no samples passed the applied filters.")
+    }
+    sample.ct.info = sample.ct.info[which(sample.ct.info$sampleId %in% metadata$sampleId),]
+
+    filter.data[["sample.metadata"]] = metadata
+    filter.data[["cell.type.metadata"]] = sample.ct.info
+    filter.data[["sample.count"]] = nrow(metadata)
+    filter.data[["cell.count"]] = sum(metadata$cell.number)
+    message(paste0(filter.data[["sample.count"]], " samples and ", filter.data[["cell.count"]]," cells were found"))
+    return(filter.data)
+  }
+
+  if (include.cell.type.children) {
+    cell.type = GetCellTypeChildren(cell.type)
+  }
+
+  sample.ct.info = sample.ct.info[which(sample.ct.info$cellType %in% cell.type),]
+  sample.ct.info = sample.ct.info[which(sample.ct.info$sampleId %in% metadata$sampleId),]
+
+  if (nrow(sample.ct.info) == 0) {
+    stop("Sorry, no samples passed the applied filters.")
+  }
+
+  metadata = metadata[which(metadata$sampleId %in% sample.ct.info$sampleId),]
+  sample.cell.count = aggregate(sample.ct.info$cellNumber, by=list(sample=sample.ct.info$sampleId), FUN=sum)
+
+  rownames(sample.cell.count) = sample.cell.count$sample
+  metadata$cell.number = sample.cell.count[rownames(metadata),"x"]
+
+  metadata = metadata[which(metadata$cell.number > min.cell.per.sample),]
+  if (nrow(metadata) == 0) {
+    stop("Sorry, no samples passed the applied filters.")
+  }
+  sample.ct.info = sample.ct.info[which(sample.ct.info$sampleId %in% metadata$sampleId),]
+
+  filter.data[["sample.metadata"]] = metadata
+  filter.data[["cell.type.metadata"]] = sample.ct.info
+  filter.data[["sample.count"]] = nrow(metadata)
+  filter.data[["cell.count"]] = sum(metadata$cell.number)
+
+  message(paste0(filter.data[["sample.count"]], " samples and ", filter.data[["cell.count"]]," cells were found"))
+
+  return(filter.data)
 }
-
 
 #' Check children of input cell type
 #'
@@ -57,6 +142,22 @@ GetCellTypeChildren <- function(cell.type, cell.ontology = NULL) {
   return(children)
 }
 
+#' Get metadata of all samples in DISCO
+#'
+#' @export
+GetDiscoMetadata <- function() {
+
+  metadata = GetJson(
+    url = "https://www.immunesinglecell.org/api/vishuo/sample/all",
+    info.msg = "Retrieving metadata from DISCO database",
+    error.msg = "Failed to retrieve metadata. Please try again. If the issue persists, please contact us at li_mengwei@immunol.a-star.edu.sg for assistance."
+  )
+  metadata = metadata[which(metadata$processStatus == "QC pass"),]
+  rownames(metadata) = metadata$sampleId
+  return(metadata)
+}
+
+
 #' Check children of input cell type
 #'
 #' @param term A partial or complete name of a cell type
@@ -68,14 +169,34 @@ GetCellTypeChildren <- function(cell.type, cell.ontology = NULL) {
 #' @export
 FindCellType <- function(term = "", cell.ontology = NULL) {
   if(is.null(cell.ontology)) {
-    tryCatch({
-      message("Retrieving ontology from DISCO database")
-      cell.ontology = fromJSON("https://immunesinglecell.org/toolkitapi/getCellOntology")
-    }, error = function(e){
-      stop("Failed to retrieve ontology Please try again. If the issue persists, please contact us at li_mengwei@immunol.a-star.edu.sg for assistance.")
-    })
+    cell.ontology = GetJson(
+      url = "https://immunesinglecell.org/toolkitapi/getCellOntology",
+      info.msg = "Retrieving ontology from DISCO database",
+      error.msg = "Failed to retrieve ontology Please try again. If the issue persists, please contact us at li_mengwei@immunol.a-star.edu.sg for assistance."
+    )
   }
   cell.type = cell.ontology$cell_name
-  cell.type = grep(term, cell.type, ignore.case = T)
+  cell.type = grep(term, cell.type, ignore.case = T, value = T)
   return(cell.type)
 }
+
+
+GetJson <- function(url, info.msg, error.msg){
+  tryCatch({
+    message(info.msg)
+    return(fromJSON(url))
+  }, error = function(e){
+    stop(error.msg)
+  })
+}
+
+#' Get cell type information of sample
+GetSampleCtInfo <- function() {
+  sample.ct.info = GetJson(
+    url = "https://immunesinglecell.org/toolkitapi/getSampleCtInfo",
+    info.msg = "Retrieving cell type information of each sample from DISCO database",
+    error.msg = "Failed to retrieve cell type information. Please try again. If the issue persists, please contact us at li_mengwei@immunol.a-star.edu.sg for assistance."
+  )
+  return(sample.ct.info)
+}
+
