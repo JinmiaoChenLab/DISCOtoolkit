@@ -1,16 +1,17 @@
 
-#' Cluster-level cell type prediction
+#' Get metadata from DISCO and apply filters on it
 #'
 #' @param project project ID(s) of interest, can be a string or vector
 #' @param tissue tissue(s) of interest, can be a string or vector
 #' @param disease disease(s) of interest, can be a string or vector
 #' @param sample.type sample type(s) of interest, can be a string or vector
 #' @param cell.type cell type(s) of interest, can be a string or vector
+#' @param cell.type.confidence  Filter the results based on the confidence of cell type prediction, which can be categorized as high, medium, or all
 #' @param include.cell.type.children Whether the cell type is an exact match or includes its child elements
 #' @param min.cell.per.sample Only samples with a cell count greater than the minimum cell count per sample will be retained.
 #' @export
 #' @importFrom jsonlite fromJSON
-FilterDiscoMetadata <- function(project = NULL, tissue = NULL, disease = NULL, sample.type = NULL, cell.type = NULL,
+FilterDiscoMetadata <- function(project = NULL, tissue = NULL, disease = NULL, sample.type = NULL, cell.type = NULL, cell.type.confidence = "medium",
                                 include.cell.type.children = T, min.cell.per.sample = 100) {
 
   filter.data = list(
@@ -20,7 +21,8 @@ FilterDiscoMetadata <- function(project = NULL, tissue = NULL, disease = NULL, s
     cell.count = NULL,
     filter =  list(
       project = project, tissue = tissue, disease = disease, sample.type = sample.type, cell.type = cell.type,
-       include.cell.type.children = include.cell.type.children, min.cell.per.sample = min.cell.per.sample
+      cell.type.confidence = cell.type.confidence, include.cell.type.children = include.cell.type.children,
+      min.cell.per.sample = min.cell.per.sample
     )
   )
 
@@ -82,6 +84,17 @@ FilterDiscoMetadata <- function(project = NULL, tissue = NULL, disease = NULL, s
 
   sample.ct.info = sample.ct.info[which(sample.ct.info$cellType %in% cell.type),]
   sample.ct.info = sample.ct.info[which(sample.ct.info$sampleId %in% metadata$sampleId),]
+
+  if (!(cell.type.confidence %in% c("high", "medium", "all"))) {
+    stop("cell.type.confidence can only be high, medium, or all")
+  }
+
+  if (cell.type.confidence == "high") {
+    sample.ct.info = sample.ct.info[which(sample.ct.info$cellTypeScore >= 0.8),]
+  } else if  (cell.type.confidence == "medium") {
+    sample.ct.info = sample.ct.info[which(sample.ct.info$cellTypeScore >= 0.6),]
+  }
+
 
   if (nrow(sample.ct.info) == 0) {
     stop("Sorry, no samples passed the applied filters.")

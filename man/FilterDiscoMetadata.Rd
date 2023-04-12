@@ -2,7 +2,7 @@
 % Please edit documentation in R/GetMetadata.R
 \name{FilterDiscoMetadata}
 \alias{FilterDiscoMetadata}
-\title{Cluster-level cell type prediction}
+\title{Get metadata from DISCO and apply filters on it}
 \usage{
 FilterDiscoMetadata(
   project = NULL,
@@ -10,6 +10,7 @@ FilterDiscoMetadata(
   disease = NULL,
   sample.type = NULL,
   cell.type = NULL,
+  cell.type.confidence = "medium",
   include.cell.type.children = T,
   min.cell.per.sample = 100
 )
@@ -25,10 +26,12 @@ FilterDiscoMetadata(
 
 \item{cell.type}{cell type(s) of interest, can be a string or vector}
 
+\item{cell.type.confidence}{Filter the results based on the confidence of cell type prediction, which can be categorized as high, medium, or all}
+
 \item{include.cell.type.children}{Whether the cell type is an exact match or includes its child elements}
 
 \item{min.cell.per.sample}{Only samples with a cell count greater than the minimum cell count per sample will be retained.}
 }
 \description{
-Cluster-level cell type prediction
+Get metadata from DISCO and apply filters on it
 }
