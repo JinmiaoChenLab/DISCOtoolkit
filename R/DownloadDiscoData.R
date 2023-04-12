@@ -1,4 +1,4 @@
-#' Check children of input cell type
+#' Download data from DISCO database
 #'
 #' @param cell.type The cell type of the input, which may be a string or a list of string
 #' @param cell.ontology The cell type ontology. If not specified, the cell type ontology will be retrieved from the DISCO database.
@@ -63,9 +63,6 @@ DownloadDiscoData <- function(metadata, output.dir = "DISCOtmp") {
     }
   }
 
-
   return(error.samples)
-
-
 }
 
