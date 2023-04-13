@@ -1,6 +1,7 @@
 
 #' Get metadata from DISCO and apply filters on it
 #'
+#' @param sample sample ID(s) of interest, can be a string or vector
 #' @param project project ID(s) of interest, can be a string or vector
 #' @param tissue tissue(s) of interest, can be a string or vector
 #' @param disease disease(s) of interest, can be a string or vector
@@ -12,7 +13,8 @@
 #' @param min.cell.per.sample Only samples with a cell count greater than the minimum cell count per sample will be retained.
 #' @export
 #' @importFrom jsonlite fromJSON
-FilterDiscoMetadata <- function(project = NULL,
+FilterDiscoMetadata <- function(sample = NULL,
+                                project = NULL,
                                 tissue = NULL,
                                 disease = NULL,
                                 platform = NULL,
@@ -28,8 +30,8 @@ FilterDiscoMetadata <- function(project = NULL,
     sample.count = NULL,
     cell.count = NULL,
     filter =  list(
-      project = project, tissue = tissue, disease = disease, platform = platform, sample.type = sample.type,
-      cell.type = cell.type, cell.type.confidence = cell.type.confidence,
+      sample = sample, project = project, tissue = tissue, disease = disease, platform = platform,
+      sample.type = sample.type, cell.type = cell.type, cell.type.confidence = cell.type.confidence,
       include.cell.type.children = include.cell.type.children, min.cell.per.sample = min.cell.per.sample
     )
   )
@@ -37,6 +39,11 @@ FilterDiscoMetadata <- function(project = NULL,
   metadata = GetDiscoMetadata()
 
   message("Filtering sample")
+
+  if (is.null(sample) == F) {
+    metadata = metadata[which(metadata$sampleId %in% sample),]
+  }
+
   if (is.null(project) == F) {
     metadata = metadata[which(metadata$projectId %in% project),]
   }

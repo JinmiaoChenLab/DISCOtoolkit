@@ -5,6 +5,7 @@
 \title{Get metadata from DISCO and apply filters on it}
 \usage{
 FilterDiscoMetadata(
+  sample = NULL,
   project = NULL,
   tissue = NULL,
   disease = NULL,
@@ -17,6 +18,8 @@ FilterDiscoMetadata(
 )
 }
 \arguments{
+\item{sample}{sample ID(s) of interest, can be a string or vector}
+
 \item{project}{project ID(s) of interest, can be a string or vector}
 
 \item{tissue}{tissue(s) of interest, can be a string or vector}

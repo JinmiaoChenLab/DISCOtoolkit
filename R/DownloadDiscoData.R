@@ -34,13 +34,20 @@ DownloadDiscoData <- function(metadata, output.dir = "DISCOtmp") {
         message(paste0("Downloading data of ", samples$sampleId[i]))
         tryCatch({
           download.file(
-            url = paste0("https://immunesinglecell.org/toolkitapi/getRdsBySample?sample=", samples$sampleId[i]),
+            url = paste0("https://www.immunesinglecell.org/toolkitapi/getRdsBySample?sample=", samples$sampleId[i]),
             destfile = output.file
           )
         }, error = function(e) {
           error.samples = append(error.samples, samples$sampleId[i])
         })
       }
+    }
+    if (length(error.samples) > 0) {
+      metadata$sample.metadata = metadata$sample.metadata[error.samples,,drop=F]
+      metadata$cell.type.metadata = metadata$cell.type.metadata[which(metadata$cell.type.metadata$sampleId %in% error.samples),,drop=F]
+      metadata$cell.count = sum(metadata$cell.type.metadata$cellNumber)
+      metadata$sample.count = length(error.samples)
+      return(metadata)
     }
   } else {
     samples = metadata$cell.type.metadata
@@ -53,7 +60,7 @@ DownloadDiscoData <- function(metadata, output.dir = "DISCOtmp") {
         message(paste0("Downloading data of ", samples$sampleId[i]))
         tryCatch({
           download.file(
-            url = paste0("https://immunesinglecell.org/toolkitapi/getRdsBySampleCt?sample=", samples$sampleId[i]),
+            url = paste0("https://www.immunesinglecell.org/toolkitapi/getRdsBySampleCt?sample=", samples$sampleId[i]),
             destfile = output.file
           )
         }, error = function(e) {
@@ -61,8 +68,22 @@ DownloadDiscoData <- function(metadata, output.dir = "DISCOtmp") {
         })
       }
     }
+
+    if (length(error.samples) > 0) {
+      metadata$cell.type.metadata = metadata$cell.type.metadata[which(samples$sampleId %in% error.samples),,drop=F]
+      metadata$sample.metadata = metadata$sample.metadata[which(metadata$sample.metadata$sampleId %in% unique(metadata$cell.type.metadata$sampleId)),,drop=F]
+
+      metadata$cell.count = sum(metadata$cell.type.metadata$cellNumber)
+      metadata$sample.count = length(unique(metadata$cell.type.metadata$sampleId))
+
+      sample.cell.count = aggregate(metadata$cell.type.metadata$cellNumber, by=list(sample=metadata$cell.type.metadata$sampleId), FUN=sum)
+      rownames(sample.cell.count) = sample.cell.count$sample
+      metadata$sample.metadata$cell.number = sample.cell.count[rownames(metadata$sample.metadata),"x"]
+
+      return(metadata)
+    }
   }
 
-  return(error.samples)
+  return(NULL)
 }
 
