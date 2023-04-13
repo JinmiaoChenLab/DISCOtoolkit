@@ -8,6 +8,7 @@ FilterDiscoMetadata(
   project = NULL,
   tissue = NULL,
   disease = NULL,
+  platform = NULL,
   sample.type = NULL,
   cell.type = NULL,
   cell.type.confidence = "medium",
@@ -21,6 +22,8 @@ FilterDiscoMetadata(
 \item{tissue}{tissue(s) of interest, can be a string or vector}
 
 \item{disease}{disease(s) of interest, can be a string or vector}
+
+\item{platform}{platform(s) of interest, can be a string or vector}
 
 \item{sample.type}{sample type(s) of interest, can be a string or vector}
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/DownloadDiscoData.R
 \name{DownloadDiscoData}
 \alias{DownloadDiscoData}
-\title{Check children of input cell type}
+\title{Download data from DISCO database}
 \usage{
 DownloadDiscoData(metadata, output.dir = "DISCOtmp")
 }
@@ -15,7 +15,7 @@ DownloadDiscoData(metadata, output.dir = "DISCOtmp")
 List of cell type
 }
 \description{
-Check children of input cell type
+Download data from DISCO database
 }
 \examples{
 # Get children of B cell

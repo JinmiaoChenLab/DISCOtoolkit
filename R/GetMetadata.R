@@ -4,6 +4,7 @@
 #' @param project project ID(s) of interest, can be a string or vector
 #' @param tissue tissue(s) of interest, can be a string or vector
 #' @param disease disease(s) of interest, can be a string or vector
+#' @param platform platform(s) of interest, can be a string or vector
 #' @param sample.type sample type(s) of interest, can be a string or vector
 #' @param cell.type cell type(s) of interest, can be a string or vector
 #' @param cell.type.confidence  Filter the results based on the confidence of cell type prediction, which can be categorized as high, medium, or all
@@ -11,8 +12,15 @@
 #' @param min.cell.per.sample Only samples with a cell count greater than the minimum cell count per sample will be retained.
 #' @export
 #' @importFrom jsonlite fromJSON
-FilterDiscoMetadata <- function(project = NULL, tissue = NULL, disease = NULL, sample.type = NULL, cell.type = NULL, cell.type.confidence = "medium",
-                                include.cell.type.children = T, min.cell.per.sample = 100) {
+FilterDiscoMetadata <- function(project = NULL,
+                                tissue = NULL,
+                                disease = NULL,
+                                platform = NULL,
+                                sample.type = NULL,
+                                cell.type = NULL,
+                                cell.type.confidence = "medium",
+                                include.cell.type.children = T,
+                                min.cell.per.sample = 100) {
 
   filter.data = list(
     sample.metadata = NULL,
@@ -20,9 +28,9 @@ FilterDiscoMetadata <- function(project = NULL, tissue = NULL, disease = NULL, s
     sample.count = NULL,
     cell.count = NULL,
     filter =  list(
-      project = project, tissue = tissue, disease = disease, sample.type = sample.type, cell.type = cell.type,
-      cell.type.confidence = cell.type.confidence, include.cell.type.children = include.cell.type.children,
-      min.cell.per.sample = min.cell.per.sample
+      project = project, tissue = tissue, disease = disease, platform = platform, sample.type = sample.type,
+      cell.type = cell.type, cell.type.confidence = cell.type.confidence,
+      include.cell.type.children = include.cell.type.children, min.cell.per.sample = min.cell.per.sample
     )
   )
 
@@ -35,6 +43,10 @@ FilterDiscoMetadata <- function(project = NULL, tissue = NULL, disease = NULL, s
 
   if (is.null(tissue) == F) {
     metadata = metadata[which(metadata$tissue %in% tissue),]
+  }
+
+  if (is.null(platform) == F) {
+    metadata = metadata[which(metadata$platform %in% platform),]
   }
 
   if (is.null(disease) == F) {
@@ -212,4 +224,18 @@ GetSampleCtInfo <- function() {
   )
   return(sample.ct.info)
 }
+
+
+#' List all potential values of a metadata field
+#'
+#' @export
+ListMetadataItem <- function(field){
+  metadata = GetDiscoMetadata()
+  if (field %in% colnames(metadata)) {
+    return(unique(metadata[,field]))
+  } else {
+    stop(paste0("DISCO data don't contain ", field, " field"))
+  }
+}
+
 

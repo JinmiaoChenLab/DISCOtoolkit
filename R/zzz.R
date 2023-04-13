@@ -21,7 +21,7 @@
     )
   }, error = function(e){
     op.disco <- list(
-      disco.url = "https://www.immunesinglecell.org/toolkitapi/"
+      disco.url = "https://disco.bii.a-star.edu.sg/"
     )
   })
 
