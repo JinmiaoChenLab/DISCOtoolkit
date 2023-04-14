@@ -36,15 +36,16 @@ DownloadDiscoData <- function(metadata, output.dir = "DISCOtmp") {
             url = paste0(getOption("disco.url"), "/getRdsBySample?sample=", samples$sampleId[i]),
             destfile = output.file
           )
+          if (!(md5sum(output.file) == samples$md5[i])) {
+            error.samples = append(error.samples, samples$sampleId[i])
+          }
         }, error = function(e) {
           error.samples = append(error.samples, samples$sampleId[i])
           return(error.samples)
         })
       }
     }
-    print(error.samples)
     if (length(error.samples) > 0) {
-      print(error.samples)
       metadata$sample.metadata = metadata$sample.metadata[error.samples,,drop=F]
       metadata$cell.type.metadata = metadata$cell.type.metadata[which(metadata$cell.type.metadata$sampleId %in% error.samples),,drop=F]
       metadata$cell.count = sum(metadata$cell.type.metadata$cellNumber)
@@ -65,6 +66,9 @@ DownloadDiscoData <- function(metadata, output.dir = "DISCOtmp") {
             url = paste0(getOption("disco.url"),"/getRdsBySampleCt?sample=", samples$sampleId[i]),
             destfile = output.file
           )
+          if (!(md5sum(output.file) == samples$md5[i])) {
+            error.samples = append(error.samples, samples$sampleId[i])
+          }
         }, error = function(e) {
           error.samples = append(error.samples, samples$sampleId[i])
           return(error.samples)
