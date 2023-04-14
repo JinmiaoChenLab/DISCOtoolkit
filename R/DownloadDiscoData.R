@@ -23,7 +23,6 @@ DownloadDiscoData <- function(metadata, output.dir = "DISCOtmp") {
     stop("The output directory cannot be created.")
   })
 
-
   if (is.null(metadata$filter$cell.type)) {
     samples = metadata$sample.metadata
     for (i in 1:nrow(samples)) {
@@ -32,17 +31,20 @@ DownloadDiscoData <- function(metadata, output.dir = "DISCOtmp") {
         message(paste0(samples$sampleId[i], " has been downloaded before. Ignore..."))
       } else {
         message(paste0("Downloading data of ", samples$sampleId[i]))
-        tryCatch({
+        error.samples = tryCatch({
           download.file(
-            url = paste0("https://www.immunesinglecell.org/toolkitapi/getRdsBySample?sample=", samples$sampleId[i]),
+            url = paste0(getOption("disco.url"), "/getRdsBySample?sample=", samples$sampleId[i]),
             destfile = output.file
           )
         }, error = function(e) {
           error.samples = append(error.samples, samples$sampleId[i])
+          return(error.samples)
         })
       }
     }
+    print(error.samples)
     if (length(error.samples) > 0) {
+      print(error.samples)
       metadata$sample.metadata = metadata$sample.metadata[error.samples,,drop=F]
       metadata$cell.type.metadata = metadata$cell.type.metadata[which(metadata$cell.type.metadata$sampleId %in% error.samples),,drop=F]
       metadata$cell.count = sum(metadata$cell.type.metadata$cellNumber)
@@ -58,13 +60,14 @@ DownloadDiscoData <- function(metadata, output.dir = "DISCOtmp") {
         message(paste0(samples$sampleId[i], " has been downloaded before. Ignore..."))
       } else {
         message(paste0("Downloading data of ", samples$sampleId[i]))
-        tryCatch({
+        error.samples = tryCatch({
           download.file(
-            url = paste0("https://www.immunesinglecell.org/toolkitapi/getRdsBySampleCt?sample=", samples$sampleId[i]),
+            url = paste0(getOption("disco.url"),"/getRdsBySampleCt?sample=", samples$sampleId[i]),
             destfile = output.file
           )
         }, error = function(e) {
           error.samples = append(error.samples, samples$sampleId[i])
+          return(error.samples)
         })
       }
     }

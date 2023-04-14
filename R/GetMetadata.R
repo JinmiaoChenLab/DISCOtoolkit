@@ -155,12 +155,11 @@ FilterDiscoMetadata <- function(sample = NULL,
 #' @export
 GetCellTypeChildren <- function(cell.type, cell.ontology = NULL) {
   if(is.null(cell.ontology)) {
-    tryCatch({
-      message("Retrieving ontology from DISCO database")
-      cell.ontology = fromJSON("https://immunesinglecell.org/toolkitapi/getCellOntology")
-    }, error = function(e){
-      stop("Failed to retrieve ontology Please try again. If the issue persists, please contact us at li_mengwei@immunol.a-star.edu.sg for assistance.")
-    })
+    cell.ontology = GetJson(
+      url = paste0(getOption("disco.url"), "/getCellOntology"),
+      info.msg = "Retrieving ontology from DISCO database",
+      error.msg = "Failed to retrieve ontology Please try again. If the issue persists, please contact us at li_mengwei@immunol.a-star.edu.sg for assistance."
+    )
   }
 
   children = c(cell.type)
@@ -202,7 +201,7 @@ GetDiscoMetadata <- function() {
 FindCellType <- function(term = "", cell.ontology = NULL) {
   if(is.null(cell.ontology)) {
     cell.ontology = GetJson(
-      url = "https://immunesinglecell.org/toolkitapi/getCellOntology",
+      url = paste0(getOption("disco.url"), "/getCellOntology"),
       info.msg = "Retrieving ontology from DISCO database",
       error.msg = "Failed to retrieve ontology Please try again. If the issue persists, please contact us at li_mengwei@immunol.a-star.edu.sg for assistance."
     )
@@ -225,7 +224,7 @@ GetJson <- function(url, info.msg, error.msg){
 #' Get cell type information of sample
 GetSampleCtInfo <- function() {
   sample.ct.info = GetJson(
-    url = "https://immunesinglecell.org/toolkitapi/getSampleCtInfo",
+    url = paste0(getOption("disco.url"), "/getSampleCtInfo"),
     info.msg = "Retrieving cell type information of each sample from DISCO database",
     error.msg = "Failed to retrieve cell type information. Please try again. If the issue persists, please contact us at li_mengwei@immunol.a-star.edu.sg for assistance."
   )
