@@ -74,10 +74,10 @@ CELLiDCluster <- function(rna, ref.data = NULL, ref.deg = NULL, atlas = NULL, n.
   predicted.cell = do.call(cbind, predicted.cell)
   rownames(predicted.cell) = colnames(ref.data)
 
-  ct = apply(predicted.cell, 2, function(x) {
+  ct = lapply(1:ncol(predicted.cell), function(i) {
+    x = predicted.cell[,i]
     return(as.numeric(which(rank(-x) <=5)))
-  }, simplify = F)
-
+  })
 
   # Second round of prediction
   predicted.cell = pbmclapply(
@@ -90,20 +90,26 @@ CELLiDCluster <- function(rna, ref.data = NULL, ref.deg = NULL, atlas = NULL, n.
       predict = apply(ref, 2, function(i) {
         cor(as.numeric(i), input, method = "spearman", use="complete.obs")
       })
-      return(c(names(sort(predict, decreasing = T)[1:n.predict]), as.numeric(sort(predict, decreasing = T)[1:n.predict])))
+      return(c(str_match(names(sort(predict, decreasing = T)[1:n.predict]), "^(.*)--")[,2],
+               str_match(names(sort(predict, decreasing = T)[1:n.predict]), "--(.*)$")[,2],
+               as.numeric(sort(predict, decreasing = T)[1:n.predict])))
     }, mc.cores = ncores
   )
 
   predicted.cell = do.call(rbind, predicted.cell)
   predicted.cell = data.frame(predicted.cell)
-  colnames(predicted.cell)[1:(ncol(predicted.cell)/2)] = paste0("predict_", 1:(ncol(predicted.cell)/2))
-  colnames(predicted.cell)[(ncol(predicted.cell)/2 + 1):ncol(predicted.cell)] = paste0("score_", 1:(ncol(predicted.cell)/2))
+  colnames(predicted.cell)[1:(ncol(predicted.cell)/3)] = paste0("predict_cell_type_", 1:n.predict)
+  colnames(predicted.cell)[(ncol(predicted.cell)/3 + 1):(ncol(predicted.cell)/3*2)] = paste0("source_atlas_", 1:n.predict)
+  colnames(predicted.cell)[(ncol(predicted.cell)/3*2 + 1):ncol(predicted.cell)] = paste0("score_", 1:n.predict)
 
-  for (i in (ncol(predicted.cell)/2 + 1):ncol(predicted.cell)) {
+  for (i in (ncol(predicted.cell)/3*2 + 1):ncol(predicted.cell)) {
     predicted.cell[,i] = round(as.numeric(predicted.cell[,i]), 3)
   }
 
   rownames(predicted.cell) = colnames(rna)
+
+
+
   return(predicted.cell)
 }
 
