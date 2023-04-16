@@ -1,7 +1,7 @@
 .onAttach <- function(libname, pkgname) {
 
   tryCatch({
-    if(packageVersion("DISCOtoolkit") == fromJSON("https://www.immunesinglecell.org/api/vishuo/getToolkitVersion")$version) {
+    if(packageVersion("DISCOtoolkit") == fromJSON("http://www.immunesinglecell.org/api/vishuo/getToolkitVersion")$version) {
       packageStartupMessage("Welcome to DISCOtoolkit.")
     } else {
       packageStartupMessage("There is a new version of DISCOtoolkit available. Please update to ensure that the functions work normally.")
@@ -17,11 +17,11 @@
   op.disco <- list()
   tryCatch({
     op.disco <- list(
-      disco.url = fromJSON("https://www.immunesinglecell.org/api/vishuo/getToolkitUrl")$url
+      disco.url = fromJSON("http://www.immunesinglecell.org/api/vishuo/getToolkitUrl")$url
     )
   }, error = function(e){
     op.disco <- list(
-      disco.url = "https://disco.bii.a-star.edu.sg/"
+      disco.url = "http://www.immunesinglecell.org/toolkitapi/"
     )
   })
 
