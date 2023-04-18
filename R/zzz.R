@@ -14,15 +14,18 @@
 .onLoad <- function(libname, pkgname) {
   op <- options()
 
-  op.disco <- list()
+  op.disco <-  list(
+    disco.url = "http://www.immunesinglecell.org/toolkitapi/",
+    timeout = 6000
+  )
+
   tryCatch({
     op.disco <- list(
-      disco.url = fromJSON("http://www.immunesinglecell.org/api/vishuo/getToolkitUrl")$url
+      disco.url = fromJSON("http://www.immunesinglecell.org/api/vishuo/getToolkitUrl")$url,
+      timeout = 6000
     )
   }, error = function(e){
-    op.disco <- list(
-      disco.url = "http://www.immunesinglecell.org/toolkitapi/"
-    )
+    message("Fail to get url prefix, use default value")
   })
 
   toset <- !(names(op.disco) %in% names(op))
