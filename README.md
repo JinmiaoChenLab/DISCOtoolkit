@@ -91,10 +91,10 @@ DimPlot(rna, group.by = "cell.type", label = T)
 ``` r
 markers = FindMarkers(rna, ident.1 = 0, only.pos = T, logfc.threshold = 0.5)
 cellid.input = data.frame(gene = rownames(markers), logFC = markers$avg_log2FC)
-cellid.res = CELLiDEnrichment(markers[,c(1,2)])
+cellid.res = CELLiDEnrichment(cellid.input)
 
 # also it will download 'ref_geneset.rds' in 'DISCOtmp' folder by default,
 # You can reuse this data for subsequent CELLiDEnrichment analyses as follow:
 ref = readRDS("DISCOtmp/ref_geneset.rds")
-cellid.res = CELLiDEnrichment(markers[,c(1,2)], reference = ref)
+cellid.res = CELLiDEnrichment(cellid.input, reference = ref)
 ```
