@@ -237,6 +237,9 @@ GetSampleCtInfo <- function() {
 #' @export
 ListMetadataItem <- function(field){
   metadata = GetDiscoMetadata()
+  colnames(metadata) = gsub("([a-z])([A-Z])", "\\1.\\L\\2", colnames(metadata), perl = TRUE)
+  colnames(metadata)[which(colnames(metadata) == "sample.id")] = "sample"
+  colnames(metadata)[which(colnames(metadata) == "project.id")] = "project"
   if (field %in% colnames(metadata)) {
     return(unique(metadata[,field]))
   } else {
