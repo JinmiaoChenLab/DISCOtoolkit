@@ -179,7 +179,7 @@ GetCellTypeChildren <- function(cell.type, cell.ontology = NULL) {
 GetDiscoMetadata <- function() {
 
   metadata = GetJson(
-    url = "http://www.immunesinglecell.org/api/vishuo/sample/all",
+    url = "https://www.immunesinglecell.org/api/vishuo/sample/all",
     info.msg = "Retrieving metadata from DISCO database",
     error.msg = "Failed to retrieve metadata. Please try again. If the issue persists, please contact us at li_mengwei@immunol.a-star.edu.sg for assistance."
   )

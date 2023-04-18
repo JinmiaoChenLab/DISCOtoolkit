@@ -15,21 +15,21 @@
   op <- options()
 
   op.disco <-  list(
-    disco.url = "http://www.immunesinglecell.org/toolkitapi/",
+    disco.url = "https://www.immunesinglecell.org/toolkitapi/",
     timeout = 6000
   )
 
   tryCatch({
     op.disco <- list(
-      disco.url = fromJSON("http://www.immunesinglecell.org/api/vishuo/getToolkitUrl")$url,
+      disco.url = fromJSON("https://www.immunesinglecell.org/api/vishuo/getToolkitUrl")$url,
       timeout = 6000
     )
   }, error = function(e){
     message("Fail to get url prefix, use default value")
   })
 
-  toset <- !(names(op.disco) %in% names(op))
-  if (any(toset)) options(op.disco[toset])
-
+  # toset <- !(names(op.disco) %in% names(op))
+  # if (any(toset)) options(op.disco[toset])
+  options(op.disco)
   invisible()
 }
