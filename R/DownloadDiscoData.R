@@ -38,6 +38,8 @@ DownloadDiscoData <- function(metadata, output.dir = "DISCOtmp") {
           )
           if (!(md5sum(output.file) == samples$md5[i])) {
             error.samples = append(error.samples, samples$sampleId[i])
+            unlink(output.file)
+            message(paste(samples$sampleId[i]), " md5 check failed")
           }
         }, error = function(e) {
           error.samples = append(error.samples, samples$sampleId[i])
@@ -68,6 +70,8 @@ DownloadDiscoData <- function(metadata, output.dir = "DISCOtmp") {
           )
           if (!(md5sum(output.file) == samples$md5[i])) {
             error.samples = append(error.samples, samples$sampleId[i])
+            unlink(output.file)
+            message(paste(samples$sampleId[i]), " md5 check failed")
           }
         }, error = function(e) {
           error.samples = append(error.samples, samples$sampleId[i])
