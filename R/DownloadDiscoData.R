@@ -34,7 +34,7 @@ DownloadDiscoData <- function(metadata, output.dir = "DISCOtmp") {
         error.samples = tryCatch({
           download.file(
             url = paste0(getOption("disco.url"), "/getRdsBySample?sample=", samples$sampleId[i]),
-            destfile = output.file
+            destfile = output.file, method = "curl"
           )
           if (!(md5sum(output.file) == samples$md5[i])) {
             error.samples = append(error.samples, samples$sampleId[i])
@@ -66,7 +66,7 @@ DownloadDiscoData <- function(metadata, output.dir = "DISCOtmp") {
         error.samples = tryCatch({
           download.file(
             url = paste0(getOption("disco.url"),"/getRdsBySampleCt?sample=", samples$sampleId[i]),
-            destfile = output.file
+            destfile = output.file, method = "curl"
           )
           if (!(md5sum(output.file) == samples$md5[i])) {
             error.samples = append(error.samples, samples$sampleId[i])

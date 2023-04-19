@@ -33,12 +33,12 @@ CELLiDCluster <- function(rna, ref.data = NULL, ref.deg = NULL, atlas = NULL, n.
     }
     if (is.null(ref.data)) {
       download.file("https://www.immunesinglecell.org/toolkitapi/getRef",
-                    paste0(ref.path, "/ref_data.rds"))
+                    paste0(ref.path, "/ref_data.rds"), method = "curl")
       ref.data = readRDS(paste0(ref.path, "/ref_data.rds"))
     }
     if (is.null(ref.deg)) {
       download.file("https://www.immunesinglecell.org/toolkitapi/getRefDeg",
-                    paste0(ref.path, "/ref_deg.rds"))
+                    paste0(ref.path, "/ref_deg.rds"), method = "curl")
       ref.deg = readRDS(paste0(ref.path, "/ref_deg.rds"))
     }
   }
@@ -145,7 +145,7 @@ CELLiDEnrichment <- function(input, reference = NULL, ref.path = NULL, ncores = 
       ref.path = "DISCOtmp"
     }
     download.file("https://www.immunesinglecell.org/toolkitapi/getGeneSet",
-                  paste0(ref.path, "/ref_geneset.rds"))
+                  paste0(ref.path, "/ref_geneset.rds"), method = "curl")
     reference = readRDS(paste0(ref.path, "/ref_geneset.rds"))
   }
   reference$name = paste0(reference$name, " in ", reference$atlas)
