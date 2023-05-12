@@ -33,7 +33,7 @@ DownloadDiscoData <- function(metadata, output.dir = "DISCOtmp") {
         message(paste0("Downloading data of ", samples$sampleId[i]))
         error.samples = tryCatch({
           download.file(
-            url = paste0(getOption("disco.url"), "/getRdsBySample?sample=", samples$sampleId[i]),
+            url = paste0(getOption("disco.url"), "/getRdsBySample?sample=", samples$sampleId[i], "&project=", samples$projectId[i]),
             destfile = output.file, method = "curl"
           )
           if (!(md5sum(output.file) == samples$md5[i])) {
@@ -56,6 +56,7 @@ DownloadDiscoData <- function(metadata, output.dir = "DISCOtmp") {
     }
   } else {
     samples = metadata$cell.type.metadata
+    samples$sample = samples$sampleId
     samples$sampleId = paste0(samples$sampleId, "_", samples$cluster)
     for (i in 1:nrow(samples)) {
       output.file = paste0(output.dir, "/", samples$sampleId[i], ".rds")
@@ -65,7 +66,7 @@ DownloadDiscoData <- function(metadata, output.dir = "DISCOtmp") {
         message(paste0("Downloading data of ", samples$sampleId[i]))
         error.samples = tryCatch({
           download.file(
-            url = paste0(getOption("disco.url"),"/getRdsBySampleCt?sample=", samples$sampleId[i]),
+            url = paste0(getOption("disco.url"),"/getRdsBySampleCt?sample=", samples$sampleId[i], "&project=", metadata$sample.metadata[samples$sample[i], "projectId"]),
             destfile = output.file, method = "curl"
           )
           if (!(md5sum(output.file) == samples$md5[i])) {
