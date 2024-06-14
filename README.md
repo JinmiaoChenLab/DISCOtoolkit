@@ -52,7 +52,7 @@ metadata = FilterDiscoMetadata(
 # 75 samples and 141886 cells were found
 
 # download filtered data into 'disco_data' folder
-download.log = DownloadDiscoData(metadata, output_dir = "disco_data")
+DownloadDiscoData(metadata, output_dir = "disco_data")
 ```
 
 ### CELLiD
