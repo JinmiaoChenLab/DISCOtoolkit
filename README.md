@@ -30,14 +30,14 @@ devtools::install_github("git@github.com:JinmiaoChenLab/DISCOtoolkit.git")
 ``` r
 library(DISCOtoolkit)
 
-# find samples from normal lung tissue and sequenced by 10X Genomics platform
+# find samples from normal lung tissue and sequenced by 10X Genomics 5' platform
 # retain samples containing more than 100 Macrophages(or its children)
 metadata = FilterDiscoMetadata(
   sample_id = NULL,
   project_id = NULL,
   tissue = "lung",
   disease = NULL,
-  platform = c("10x3'", "10x5'"),
+  platform = c("10x5'"),
   sample_type = c("control", "adjacent normal"),
   cell_type = "Macrophage", 
   cell_type_confidence = "high", 
@@ -49,7 +49,7 @@ metadata = FilterDiscoMetadata(
 # Filtering sample
 # Fetching cell type information
 # Fetching ontology from DISCO database
-# 75 samples and 141886 cells were found
+# 18 samples and 64592 cells were found
 
 # download filtered data into 'disco_data' folder
 DownloadDiscoData(metadata, output_dir = "disco_data")

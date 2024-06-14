@@ -35,7 +35,14 @@ DownloadDiscoData <- function(metadata, output_dir = "DISCOtmp") {
     rownames(cell) = cell$cell_id
     cell = cell[,c(3,6)]
     if (!is.null(metadata$filter$cell_type)) {
-      cell = cell[which(cell$cell_type %in% metadata$filter$cell_type),,drop=F]
+      cell = cell[which(cell$cell_type %in% metadata[["cell_type_metadata"]][["cell_type"]]),,drop=F]
+
+      if (metadata[["filter"]][["cell_type_confidence"]] == "high") {
+        cell = cell[which(cell$cell_type_score >= 0.8),, drop=F]
+      } else if  (metadata[["filter"]][["cell_type_confidence"]] == "medium") {
+        cell = cell[which(cell$cell_type_score >= 0.6),, drop=F]
+      }
+
       rna = rna[,rownames(cell),drop=F]
     }
     saveRDS(rna, output_file)
