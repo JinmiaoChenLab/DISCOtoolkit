@@ -10,6 +10,7 @@
 #' )
 #' DownloadDiscoData(metadata, output_dir = "disco_data")
 #' @importFrom progress progress_bar
+#' @import Matrix
 #' @export
 DownloadDiscoData <- function(metadata, output_dir = "DISCOtmp") {
 
