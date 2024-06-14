@@ -6,46 +6,47 @@
 #' @param tissue tissue(s) of interest, can be a string or vector
 #' @param disease disease(s) of interest, can be a string or vector
 #' @param platform platform(s) of interest, can be a string or vector
-#' @param sample.type sample type(s) of interest, can be a string or vector
-#' @param cell.type cell type(s) of interest, can be a string or vector
-#' @param cell.type.confidence  Filter the results based on the confidence of cell type prediction, which can be categorized as high, medium, or all
-#' @param include.cell.type.children Whether the cell type is an exact match or includes its child elements
-#' @param min.cell.per.sample Only samples with a cell count greater than the minimum cell count per sample will be retained.
+#' @param sample_type sample type(s) of interest, can be a string or vector
+#' @param cell_type cell type(s) of interest, can be a string or vector
+#' @param cell_type_confidence  Filter the results based on the confidence of cell type prediction, which can be categorized as high, medium, or all
+#' @param include_cell_type_children Whether the cell type is an exact match or includes its child elements
+#' @param min_cell_per_sample Only samples with a cell count greater than the minimum cell count per sample will be retained.
 #' @export
 #' @importFrom jsonlite fromJSON
-FilterDiscoMetadata <- function(sample = NULL,
-                                project = NULL,
+FilterDiscoMetadata <- function(sample_id = NULL,
+                                project_id = NULL,
                                 tissue = NULL,
                                 disease = NULL,
                                 platform = NULL,
-                                sample.type = NULL,
-                                cell.type = NULL,
-                                cell.type.confidence = "medium",
-                                include.cell.type.children = T,
-                                min.cell.per.sample = 100) {
+                                sample_type = NULL,
+                                cell_type = NULL,
+                                cell_type_confidence = "medium",
+                                include_cell_type_children = T,
+                                min_cell_per_sample = 100) {
 
-  filter.data = list(
-    sample.metadata = NULL,
-    cell.type.metadata = NULL,
-    sample.count = NULL,
-    cell.count = NULL,
+  filter_data = list(
+    sample_metadata = NULL,
+    cell_type_metadata = NULL,
+    sample_count = NULL,
+    cell_count = NULL,
     filter =  list(
-      sample = sample, project = project, tissue = tissue, disease = disease, platform = platform,
-      sample.type = sample.type, cell.type = cell.type, cell.type.confidence = cell.type.confidence,
-      include.cell.type.children = include.cell.type.children, min.cell.per.sample = min.cell.per.sample
+      sample_id = sample_id, project_id = project_id, tissue = tissue, disease = disease, platform = platform,
+      sample_type = sample_type, cell_type = cell_type, cell_type_confidence = cell_type_confidence,
+      include_cell_type_children = include_cell_type_children, min_cell_per_sample = min_cell_per_sample
     )
   )
 
-  metadata = GetDiscoMetadata()
+  message("Fetching sample metadata")
+  metadata = read.csv(paste0(getOption("disco_url"), "toolkit/getSampleMetadata"), sep = "\t")
+  rownames(metadata) = metadata$sample_id
 
   message("Filtering sample")
-
-  if (is.null(sample) == F) {
-    metadata = metadata[which(metadata$sampleId %in% sample),]
+  if (is.null(sample_id) == F) {
+    metadata = metadata[which(metadata$sample_id %in% sample_id),]
   }
 
-  if (is.null(project) == F) {
-    metadata = metadata[which(metadata$projectId %in% project),]
+  if (is.null(project_id) == F) {
+    metadata = metadata[which(metadata$project_id %in% project_id),]
   }
 
   if (is.null(tissue) == F) {
@@ -60,175 +61,141 @@ FilterDiscoMetadata <- function(sample = NULL,
     metadata = metadata[which(metadata$disease %in% disease),]
   }
 
-  if (is.null(sample.type) == F) {
-    metadata = metadata[which(metadata$sampleType %in% sample.type),]
+  if (is.null(sample_type) == F) {
+    metadata = metadata[which(metadata$sample_type %in% sample_type),]
   }
 
   if (nrow(metadata) == 0) {
     stop("Sorry, no samples passed the applied filters.")
   }
 
-  sample.ct.info = GetSampleCtInfo()
+  message("Fetching cell type information")
+  sample_ct_info = read.csv(paste0(getOption("disco_url"), "toolkit/getCellTypeSummary"), sep = "\t")
 
 
-  retain.field = c("sampleId", "projectId", "sampleType", "anatomicalSite", "disease",
-                   "tissue", "platform", "ageGroup", "age", "gender", "cellSorting",
-                   "diseaseSubtype", "diseaseStage", "treatment", "md5")
-  metadata = metadata[,retain.field]
+  if (is.null(cell_type)) {
 
-  if (is.null(cell.type)) {
+    sample_ct_info = sample_ct_info[which(sample_ct_info$sample_id %in% metadata$sample_id),]
+    sample_cell_count = aggregate(sample_ct_info$cell_number, by=list(sample=sample_ct_info$sample_id), FUN=sum)
+    rownames(sample_cell_count) = sample_cell_count$sample
+    metadata$cell_number = sample_cell_count[rownames(metadata),"x"]
 
-    sample.ct.info = sample.ct.info[which(sample.ct.info$sampleId %in% metadata$sampleId),]
-    sample.cell.count = aggregate(sample.ct.info$cellNumber, by=list(sample=sample.ct.info$sampleId), FUN=sum)
-    rownames(sample.cell.count) = sample.cell.count$sample
-    metadata$cell.number = sample.cell.count[rownames(metadata),"x"]
-
-    metadata = metadata[which(metadata$cell.number > min.cell.per.sample),]
+    metadata = metadata[which(metadata$cell_number > min_cell_per_sample),]
     if (nrow(metadata) == 0) {
       stop("Sorry, no samples passed the applied filters.")
     }
-    sample.ct.info = sample.ct.info[which(sample.ct.info$sampleId %in% metadata$sampleId),]
+    sample_ct_info = sample_ct_info[which(sample_ct_info$sample_id %in% metadata$sample_id),]
 
-    filter.data[["sample.metadata"]] = metadata
-    filter.data[["cell.type.metadata"]] = sample.ct.info
-    filter.data[["sample.count"]] = nrow(metadata)
-    filter.data[["cell.count"]] = sum(metadata$cell.number)
-    message(paste0(filter.data[["sample.count"]], " samples and ", filter.data[["cell.count"]]," cells were found"))
-    return(filter.data)
+    metadata = metadata[,apply(metadata, 2, function(i){sum(is.na(i))}) < nrow(metadata)]
+
+
+    filter_data[["sample_metadata"]] = metadata
+    filter_data[["cell_type_metadata"]] = sample_ct_info
+    filter_data[["sample_count"]] = nrow(metadata)
+    filter_data[["cell_count"]] = sum(metadata$cell_number)
+    message(paste0(filter_data[["sample_count"]], " samples and ", filter_data[["cell_count"]]," cells were found"))
+    return(filter_data)
   }
 
-  if (include.cell.type.children) {
-    cell.type = GetCellTypeChildren(cell.type)
+  if (include_cell_type_children) {
+    cell_type = GetCellTypeChildren(cell_type)
   }
 
-  sample.ct.info = sample.ct.info[which(sample.ct.info$cellType %in% cell.type),]
-  sample.ct.info = sample.ct.info[which(sample.ct.info$sampleId %in% metadata$sampleId),]
+  sample_ct_info = sample_ct_info[which(sample_ct_info$cell_type %in% cell_type),]
+  sample_ct_info = sample_ct_info[which(sample_ct_info$sample_id %in% metadata$sample_id),]
 
-  if (!(cell.type.confidence %in% c("high", "medium", "all"))) {
-    stop("cell.type.confidence can only be high, medium, or all")
+  if (!(cell_type_confidence %in% c("high", "medium", "all"))) {
+    stop("cell_type_confidence can only be high, medium, or all")
   }
 
-  if (cell.type.confidence == "high") {
-    sample.ct.info = sample.ct.info[which(sample.ct.info$cellTypeScore >= 0.8),]
-  } else if  (cell.type.confidence == "medium") {
-    sample.ct.info = sample.ct.info[which(sample.ct.info$cellTypeScore >= 0.6),]
+  if (cell_type_confidence == "high") {
+    sample_ct_info = sample_ct_info[which(sample_ct_info$cell_type_score >= 0.8),]
+  } else if  (cell_type_confidence == "medium") {
+    sample_ct_info = sample_ct_info[which(sample_ct_info$cell_type_score >= 0.6),]
   }
 
 
-  if (nrow(sample.ct.info) == 0) {
+  if (nrow(sample_ct_info) == 0) {
     stop("Sorry, no samples passed the applied filters.")
   }
 
-  metadata = metadata[which(metadata$sampleId %in% sample.ct.info$sampleId),]
-  sample.cell.count = aggregate(sample.ct.info$cellNumber, by=list(sample=sample.ct.info$sampleId), FUN=sum)
+  metadata = metadata[which(metadata$sample_id %in% sample_ct_info$sample_id),]
+  sample_cell_count = aggregate(sample_ct_info$cell_number, by=list(sample=sample_ct_info$sample_id), FUN=sum)
 
-  rownames(sample.cell.count) = sample.cell.count$sample
-  metadata$cell.number = sample.cell.count[rownames(metadata),"x"]
+  rownames(sample_cell_count) = sample_cell_count$sample
+  metadata$cell_number = sample_cell_count[rownames(metadata),"x"]
 
-  metadata = metadata[which(metadata$cell.number > min.cell.per.sample),]
+  metadata = metadata[which(metadata$cell_number > min_cell_per_sample),]
   if (nrow(metadata) == 0) {
     stop("Sorry, no samples passed the applied filters.")
   }
-  sample.ct.info = sample.ct.info[which(sample.ct.info$sampleId %in% metadata$sampleId),]
+  sample_ct_info = sample_ct_info[which(sample_ct_info$sample_id %in% metadata$sample_id),]
 
-  filter.data[["sample.metadata"]] = metadata
-  filter.data[["cell.type.metadata"]] = sample.ct.info
-  filter.data[["sample.count"]] = nrow(metadata)
-  filter.data[["cell.count"]] = sum(metadata$cell.number)
+  filter_data[["sample_metadata"]] = metadata
+  filter_data[["cell_type_metadata"]] = sample_ct_info
+  filter_data[["sample_count"]] = nrow(metadata)
+  filter_data[["cell_count"]] = sum(metadata$cell_number)
 
-  message(paste0(filter.data[["sample.count"]], " samples and ", filter.data[["cell.count"]]," cells were found"))
+  message(paste0(filter_data[["sample_count"]], " samples and ", filter_data[["cell_count"]]," cells were found"))
 
-  return(filter.data)
+  return(filter_data)
 }
+
 
 #' Check children of input cell type
 #'
-#' @param cell.type The cell type of the input, which may be a string or a list of string
-#' @param cell.ontology The cell type ontology. If not specified, the cell type ontology will be retrieved from the DISCO database.
+#' @param cell_type The cell type of the input, which may be a string or a list of string
+#' @param cell_ontology The cell type ontology. If not specified, the cell type ontology will be retrieved from the DISCO database.
 #' @return List of cell type
 #' @examples
 #' # Get children of B cell
-#' GetCellTypeChildren(cell.type = c("B cell"))
+#' GetCellTypeChildren(cell_type = c("B cell"))
 #'
 #' # Get children of B cell and Macrophage
-#' GetCellTypeChildren(cell.type = c("B cell", "Macrophage"))
+#' GetCellTypeChildren(cell_type = c("B cell", "Macrophage"))
 #' @export
-GetCellTypeChildren <- function(cell.type, cell.ontology = NULL) {
-  if(is.null(cell.ontology)) {
-    cell.ontology = GetJson(
-      url = paste0(getOption("disco.url"), "/getCellOntology"),
-      info.msg = "Retrieving ontology from DISCO database",
+GetCellTypeChildren <- function(cell_type, cell_ontology = NULL) {
+  if(is.null(cell_ontology)) {
+    cell_ontology = GetJson(
+      url = paste0(getOption("disco_url"), "toolkit/getCellOntology"),
+      info.msg = "Fetching ontology from DISCO database",
       error.msg = "Failed to retrieve ontology Please try again. If the issue persists, please contact us at li_mengwei@immunol.a-star.edu.sg for assistance."
     )
   }
 
-  children = c(cell.type)
+  children = c(cell_type)
 
-  while(length(cell.type) > 0) {
-    children = append(children, cell.ontology$cell_name[which(cell.ontology$parent %in% cell.type)])
-    cell.type = cell.ontology$cell_name[which(cell.ontology$parent %in% cell.type)]
+  while(length(cell_type) > 0) {
+    children = append(children, cell_ontology$cell_name[which(cell_ontology$parent %in% cell_type)])
+    cell_type = cell_ontology$cell_name[which(cell_ontology$parent %in% cell_type)]
   }
 
   children = unique(children)
   return(children)
 }
 
-#' Get metadata of all samples in DISCO
-#'
-#' @export
-GetDiscoMetadata <- function() {
-
-  metadata = GetJson(
-    url = "http://www.immunesinglecell.org/api/vishuo/sample/all",
-    info.msg = "Retrieving metadata from DISCO database",
-    error.msg = "Failed to retrieve metadata. Please try again. If the issue persists, please contact us at li_mengwei@immunol.a-star.edu.sg for assistance."
-  )
-  metadata = metadata[which(metadata$processStatus == "QC pass"),]
-  rownames(metadata) = metadata$sampleId
-  return(metadata)
-}
 
 
 #' Check children of input cell type
 #'
 #' @param term A partial or complete name of a cell type
-#' @param cell.ontology The cell type ontology. If not specified, the cell type ontology will be retrieved from the DISCO database.
+#' @param cell_ontology The cell type ontology. If not specified, the cell type ontology will be retrieved from the DISCO database.
 #' @return List of cell type
 #' @examples
 #' # Retrieve cell types whose names contain the term 'blast'
-#' GetCellTypeChildren(cell.type = c("blast"))
+#' GetCellTypeChildren(cell_type = c("blast"))
 #' @export
-FindCellType <- function(term = "", cell.ontology = NULL) {
-  if(is.null(cell.ontology)) {
-    cell.ontology = GetJson(
-      url = paste0(getOption("disco.url"), "/getCellOntology"),
+FindCellType <- function(term = "", cell_ontology = NULL) {
+  if(is.null(cell_ontology)) {
+    cell_ontology = GetJson(
+      url = paste0(getOption("disco_url"), "toolkit/getCellOntology"),
       info.msg = "Retrieving ontology from DISCO database",
       error.msg = "Failed to retrieve ontology Please try again. If the issue persists, please contact us at li_mengwei@immunol.a-star.edu.sg for assistance."
     )
   }
-  cell.type = cell.ontology$cell_name
-  cell.type = grep(term, cell.type, ignore.case = T, value = T)
-  return(cell.type)
-}
-
-
-GetJson <- function(url, info.msg, error.msg){
-  tryCatch({
-    message(info.msg)
-    return(fromJSON(url))
-  }, error = function(e){
-    stop(error.msg)
-  })
-}
-
-#' Get cell type information of sample
-GetSampleCtInfo <- function() {
-  sample.ct.info = GetJson(
-    url = paste0(getOption("disco.url"), "/getSampleCtInfo"),
-    info.msg = "Retrieving cell type information of each sample from DISCO database",
-    error.msg = "Failed to retrieve cell type information. Please try again. If the issue persists, please contact us at li_mengwei@immunol.a-star.edu.sg for assistance."
-  )
-  return(sample.ct.info)
+  cell_type = cell_ontology$cell_name
+  cell_type = grep(term, cell_type, ignore.case = T, value = T)
+  return(cell_type)
 }
 
 
@@ -236,10 +203,8 @@ GetSampleCtInfo <- function() {
 #'
 #' @export
 ListMetadataItem <- function(field){
-  metadata = GetDiscoMetadata()
-  colnames(metadata) = gsub("([a-z])([A-Z])", "\\1.\\L\\2", colnames(metadata), perl = TRUE)
-  colnames(metadata)[which(colnames(metadata) == "sample.id")] = "sample"
-  colnames(metadata)[which(colnames(metadata) == "project.id")] = "project"
+  message("Fetching sample metadata")
+  metadata = read.csv(paste0(getOption("disco_url"), "toolkit/getSampleMetadata"), sep = "\t")
   if (field %in% colnames(metadata)) {
     return(unique(metadata[,field]))
   } else {

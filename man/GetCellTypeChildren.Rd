@@ -4,12 +4,12 @@
 \alias{GetCellTypeChildren}
 \title{Check children of input cell type}
 \usage{
-GetCellTypeChildren(cell.type, cell.ontology = NULL)
+GetCellTypeChildren(cell_type, cell_ontology = NULL)
 }
 \arguments{
-\item{cell.type}{The cell type of the input, which may be a string or a list of string}
+\item{cell_type}{The cell type of the input, which may be a string or a list of string}
 
-\item{cell.ontology}{The cell type ontology. If not specified, the cell type ontology will be retrieved from the DISCO database.}
+\item{cell_ontology}{The cell type ontology. If not specified, the cell type ontology will be retrieved from the DISCO database.}
 }
 \value{
 List of cell type
@@ -19,8 +19,8 @@ Check children of input cell type
 }
 \examples{
 # Get children of B cell
-GetCellTypeChildren(cell.type = c("B cell"))
+GetCellTypeChildren(cell_type = c("B cell"))
 
 # Get children of B cell and Macrophage
-GetCellTypeChildren(cell.type = c("B cell", "Macrophage"))
+GetCellTypeChildren(cell_type = c("B cell", "Macrophage"))
 }

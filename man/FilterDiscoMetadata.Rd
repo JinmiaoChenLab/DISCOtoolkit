@@ -5,38 +5,38 @@
 \title{Get metadata from DISCO and apply filters on it}
 \usage{
 FilterDiscoMetadata(
-  sample = NULL,
-  project = NULL,
+  sample_id = NULL,
+  project_id = NULL,
   tissue = NULL,
   disease = NULL,
   platform = NULL,
-  sample.type = NULL,
-  cell.type = NULL,
-  cell.type.confidence = "medium",
-  include.cell.type.children = T,
-  min.cell.per.sample = 100
+  sample_type = NULL,
+  cell_type = NULL,
+  cell_type_confidence = "medium",
+  include_cell_type_children = T,
+  min_cell_per_sample = 100
 )
 }
 \arguments{
-\item{sample}{sample ID(s) of interest, can be a string or vector}
-
-\item{project}{project ID(s) of interest, can be a string or vector}
-
 \item{tissue}{tissue(s) of interest, can be a string or vector}
 
 \item{disease}{disease(s) of interest, can be a string or vector}
 
 \item{platform}{platform(s) of interest, can be a string or vector}
 
-\item{sample.type}{sample type(s) of interest, can be a string or vector}
+\item{sample_type}{sample type(s) of interest, can be a string or vector}
 
-\item{cell.type}{cell type(s) of interest, can be a string or vector}
+\item{cell_type}{cell type(s) of interest, can be a string or vector}
 
-\item{cell.type.confidence}{Filter the results based on the confidence of cell type prediction, which can be categorized as high, medium, or all}
+\item{cell_type_confidence}{Filter the results based on the confidence of cell type prediction, which can be categorized as high, medium, or all}
 
-\item{include.cell.type.children}{Whether the cell type is an exact match or includes its child elements}
+\item{include_cell_type_children}{Whether the cell type is an exact match or includes its child elements}
 
-\item{min.cell.per.sample}{Only samples with a cell count greater than the minimum cell count per sample will be retained.}
+\item{min_cell_per_sample}{Only samples with a cell count greater than the minimum cell count per sample will be retained.}
+
+\item{sample}{sample ID(s) of interest, can be a string or vector}
+
+\item{project}{project ID(s) of interest, can be a string or vector}
 }
 \description{
 Get metadata from DISCO and apply filters on it

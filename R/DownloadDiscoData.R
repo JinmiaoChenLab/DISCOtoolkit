@@ -1,101 +1,50 @@
-#' Download data from DISCO database
+#' Download data from DISCO database using the filtered metadata
 #'
-#' @param cell.type The cell type of the input, which may be a string or a list of string
-#' @param cell.ontology The cell type ontology. If not specified, the cell type ontology will be retrieved from the DISCO database.
-#' @return List of cell type
+#' @param metadata The resulting metadata object produced by FilterDiscoMetadata function
+#' @param output_dir The directory where the downloaded files will be stored
+#' @return NULL
 #' @examples
-#' # Get children of B cell
-#' GetCellTypeChildren(cell.type = c("B cell"))
-#'
-#' # Get children of B cell and Macrophage
-#' GetCellTypeChildren(cell.type = c("B cell", "Macrophage"))
-#' @importFrom tools md5sum
+#' # Download the data from project 'GSE174748' and store it in the 'disco_data' directory
+#' metadata = FilterDiscoMetadata(
+#'   project = "GSE174748"
+#' )
+#' DownloadDiscoData(metadata, output_dir = "disco_data")
+#' @importFrom progress progress_bar
 #' @export
-DownloadDiscoData <- function(metadata, output.dir = "DISCOtmp") {
-
-  error.samples = c()
+DownloadDiscoData <- function(metadata, output_dir = "DISCOtmp") {
 
   tryCatch({
-    if (!dir.exists(output.dir)) {
-      dir.create(output.dir)
+    if (!dir.exists(output_dir)) {
+      dir.create(output_dir)
     }
   }, error = function(e){
     stop("The output directory cannot be created.")
   })
 
-  if (is.null(metadata$filter$cell.type)) {
-    samples = metadata$sample.metadata
-    for (i in 1:nrow(samples)) {
-      output.file = paste0(output.dir, "/", samples$sampleId[i], ".rds")
-      if (file.exists(output.file) & md5sum(output.file) == samples$md5[i]) {
-        message(paste0(samples$sampleId[i], " has been downloaded before. Ignore..."))
-      } else {
-        message(paste0("Downloading data of ", samples$sampleId[i]))
-        error.samples = tryCatch({
-          download.file(
-            url = paste0(getOption("disco.url"), "/getRdsBySample?sample=", samples$sampleId[i], "&project=", samples$projectId[i]),
-            destfile = output.file, method = "curl"
-          )
-          if (!(md5sum(output.file) == samples$md5[i])) {
-            error.samples = append(error.samples, samples$sampleId[i])
-            unlink(output.file)
-            message(paste(samples$sampleId[i]), " md5 check failed")
-          }
-        }, error = function(e) {
-          error.samples = append(error.samples, samples$sampleId[i])
-          return(error.samples)
-        })
-      }
-    }
-    if (length(error.samples) > 0) {
-      metadata$sample.metadata = metadata$sample.metadata[error.samples,,drop=F]
-      metadata$cell.type.metadata = metadata$cell.type.metadata[which(metadata$cell.type.metadata$sampleId %in% error.samples),,drop=F]
-      metadata$cell.count = sum(metadata$cell.type.metadata$cellNumber)
-      metadata$sample.count = length(error.samples)
-      return(metadata)
-    }
-  } else {
-    samples = metadata$cell.type.metadata
-    samples$sample = samples$sampleId
-    samples$sampleId = paste0(samples$sampleId, "_", samples$cluster)
-    for (i in 1:nrow(samples)) {
-      output.file = paste0(output.dir, "/", samples$sampleId[i], ".rds")
-      if (file.exists(output.file) & md5sum(output.file) == samples$md5[i]) {
-        message(paste0(samples$sampleId[i], " has been downloaded before. Ignore..."))
-      } else {
-        message(paste0("Downloading data of ", samples$sampleId[i]))
-        error.samples = tryCatch({
-          download.file(
-            url = paste0(getOption("disco.url"),"/getRdsBySampleCt?sample=", samples$sampleId[i], "&project=", metadata$sample.metadata[samples$sample[i], "projectId"]),
-            destfile = output.file, method = "curl"
-          )
-          if (!(md5sum(output.file) == samples$md5[i])) {
-            error.samples = append(error.samples, samples$sampleId[i])
-            unlink(output.file)
-            message(paste(samples$sampleId[i]), " md5 check failed")
-          }
-        }, error = function(e) {
-          error.samples = append(error.samples, samples$sampleId[i])
-          return(error.samples)
-        })
-      }
-    }
 
-    if (length(error.samples) > 0) {
-      metadata$cell.type.metadata = metadata$cell.type.metadata[which(samples$sampleId %in% error.samples),,drop=F]
-      metadata$sample.metadata = metadata$sample.metadata[which(metadata$sample.metadata$sampleId %in% unique(metadata$cell.type.metadata$sampleId)),,drop=F]
+  samples = metadata$sample_metadata
 
-      metadata$cell.count = sum(metadata$cell.type.metadata$cellNumber)
-      metadata$sample.count = length(unique(metadata$cell.type.metadata$sampleId))
+  pb <- progress_bar$new(format = "[:bar] :current/:total (:percent)", total = nrow(samples))
 
-      sample.cell.count = aggregate(metadata$cell.type.metadata$cellNumber, by=list(sample=metadata$cell.type.metadata$sampleId), FUN=sum)
-      rownames(sample.cell.count) = sample.cell.count$sample
-      metadata$sample.metadata$cell.number = sample.cell.count[rownames(metadata$sample.metadata),"x"]
-
-      return(metadata)
+  cell_type_list = list()
+  message("Start downloading")
+  for (i in 1:nrow(samples)) {
+    output_file = paste0(output_dir, "/", samples$sample_id[i], ".rds")
+    rna = readRDS(url(paste0(getOption("disco_url"), "download/getRawMtxRds/",samples$project_id[i],"/", samples$sample_id[i])))
+    cell = read.csv(paste0(getOption("disco_url"), "toolkit/getCellTypeSample?sampleId=", samples$sample_id[i]), sep = "\t")
+    rownames(cell) = cell$cell_id
+    cell = cell[,c(3,6)]
+    if (!is.null(metadata$filter$cell_type)) {
+      cell = cell[which(cell$cell_type %in% metadata$filter$cell_type),,drop=F]
+      rna = rna[,rownames(cell),drop=F]
     }
+    saveRDS(rna, output_file)
+    cell_type_list[[i]] = cell
+    pb$tick()
   }
 
-  return(NULL)
+  cell_type_list = do.call(rbind, cell_type_list)
+  saveRDS(cell_type_list, paste0(output_dir, "/cell_type.rds"))
+  message("Download complete")
 }
 

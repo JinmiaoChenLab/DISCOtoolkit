@@ -1,7 +1,7 @@
 Type: Package
 Package: DISCOtoolkit
 Title: DISCOtoolkit
-Version: 1.0.0
+Version: 1.1.0
 Authors@R: c(
   person(given = "Mengwei", family = "Li", email = "li_mengwei@immunol.a-star.edu.sg", role = c("cre", "aut")),
   person(given = "Jinmiao", family = "Chen", email = "chen_jinmiao@immunol.a-star.edu.sg", role = c("ths"))
@@ -15,7 +15,7 @@ Imports:
     pbmcapply,
     stringr,
     jsonlite,
-    tools
+    progress
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1

@@ -4,14 +4,14 @@
 \alias{CELLiDEnrichment}
 \title{Geneset enrichment analysis using DISCO data}
 \usage{
-CELLiDEnrichment(input, reference = NULL, ref.path = NULL, ncores = 10)
+CELLiDEnrichment(input, reference = NULL, ref_path = NULL, ncores = 10)
 }
 \arguments{
 \item{input}{A one or two columns data.frame. The first column is gene and the second column is log2FC (optional)}
 
 \item{reference}{Reference geneset If not specified, reference geneset will be downloaded from the DISCO database.}
 
-\item{ref.path}{Specify the file path to save the downloaded reference geneset data.}
+\item{ref_path}{Specify the file path to save the downloaded reference geneset data.}
 
 \item{ncores}{Number of core used for CELLiD}
 }

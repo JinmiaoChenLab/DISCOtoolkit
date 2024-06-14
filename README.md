@@ -1,22 +1,21 @@
-# DISCOtoolkit 1.0.0
+# DISCOtoolkit 1.1.0 (Jun 11, 2024)
 
-DISCOtoolkit is an R package that allows users to access data and use the tools provided by the [DISCO database](https://www.immunesinglecell.org/). It provides the following functions:
+DISCOtoolkit is an R package that provides access to data and tools from the [DISCO database](https://www.immunesinglecell.org/). Its functions include:
 
-- Filter and download DISCO data based on sample metadata and cell type information
+- Filter and download DISCO data based on sample metadata and specified cell types
 - CELLiD: cell type annotation
 - scEnrichment: geneset enrichment using DISCO DEGs
-- CellMapper: project data into DISCO atlas
 
 ## Requirement
 
-FastIntegration requires the following packages:
+DISCOtoolkit depends on the following packages:
 
 -   [R](https://www.r-project.org/) (\>= 4.0.0)
--   [Seurat](https://cran.r-project.org/web/packages/Seurat/index.html) (\>= 4.0.0)
--   [SeuratObject](https://cran.r-project.org/web/packages/SeuratObject/index.html) (\>= 4.0.0)
 -   [pbmcapply](https://cran.r-project.org/web/packages/pbmcapply/index.html)
 -   [stringr](https://cran.r-project.org/web/packages/stringr/vignettes/stringr.html)
 -   [jsonlite](https://cran.r-project.org/web/packages/jsonlite/index.html)
+-   [progress](https://cran.r-project.org/web/packages/progress/index.html)
+
 
 ## Installation
 
@@ -32,28 +31,28 @@ devtools::install_github("git@github.com:JinmiaoChenLab/DISCOtoolkit.git")
 library(DISCOtoolkit)
 
 # find samples from normal lung tissue and sequenced by 10X Genomics platform
-# retain samples contain more than 100 Macrophages(or its children)
+# retain samples containing more than 100 Macrophages(or its children)
 metadata = FilterDiscoMetadata(
-  sample = NULL,
-  project = NULL,
+  sample_id = NULL,
+  project_id = NULL,
   tissue = "lung",
   disease = NULL,
   platform = c("10x3'", "10x5'"),
-  sample.type = c("Normal", "Adjacent normal"),
-  cell.type = "Macrophage", 
-  cell.type.confidence = "high", 
-  include.cell.type.children = T, 
-  min.cell.per.sample = 50
+  sample_type = c("control", "adjacent normal"),
+  cell_type = "Macrophage", 
+  cell_type_confidence = "high", 
+  include_cell_type_children = T, 
+  min_cell_per_sample = 100
 )
 ### print information ###
-# Retrieving metadata from DISCO database
+# Fetching sample metadata
 # Filtering sample
-# Retrieving cell type information of each sample from DISCO database
-# Retrieving ontology from DISCO database
-# 57 samples and 74399 cells were found
+# Fetching cell type information
+# Fetching ontology from DISCO database
+# 75 samples and 141886 cells were found
 
 # download filtered data into 'disco_data' folder
-download.log = DownloadDiscoData(metadata, output.dir = "disco_data")
+download.log = DownloadDiscoData(metadata, output_dir = "disco_data")
 ```
 
 ### CELLiD
@@ -63,38 +62,45 @@ library(DISCOtoolkit)
 library(Seurat)
 
 metadata = FilterDiscoMetadata(
-  sample = "ERX2757110"
+  sample_id = "ERX2757110"
 )
 
-download.log = DownloadDiscoData(metadata, output.dir = "disco_data")
+DownloadDiscoData(metadata, output_dir = "disco_data")
 
 rna = readRDS("disco_data/ERX2757110.rds")
+rna = CreateSeuratObject(rna)
 rna = NormalizeData(rna)
-rna.average = AverageExpression(rna)
-predict.ct = CELLiDCluster(rna = rna.average$RNA)
+rna = FindVariableFeatures(rna)
+rna = ScaleData(rna)
+rna = RunPCA(rna)
+rna = FindNeighbors(rna, dims = 1:10)
+rna = FindClusters(rna)
+
+rna_average = AverageExpression(rna)
+predict_ct = CELLiDCluster(rna = as.matrix(rna_average$RNA))
 
 
 # It will download reference data and differential expression gene (DEG) data from DISCO and save them in the 'DISCOtmp' folder by default. You can reuse this data for subsequent CELLiD analyses as follow:
 
-ref.data = readRDS("DISCOtmp/ref_data.rds")
-ref.deg = readRDS("DISCOtmp/ref_deg.rds")
-predict.ct = CELLiDCluster(rna = rna.average$RNA, ref.data = ref.data, ref.deg = ref.deg)
+ref_data = readRDS("DISCOtmp/ref_data.rds")
+ref_deg = readRDS("DISCOtmp/ref_deg.rds")
+predict_ct = CELLiDCluster(rna = as.matrix(rna_average$RNA), ref_data = ref_data, ref_deg = ref_deg)
 
 
-rna$cell.type = predict.ct$predict_cell_type_1[as.numeric(rna$seurat_clusters)]
-
-DimPlot(rna, group.by = "cell.type", label = T)
+rna$cell_type = predict_ct$predict_cell_type_1[as.numeric(rna$seurat_clusters)]
+rna = RunUMAP(rna, dims = 1:10)
+DimPlot(rna, group.by = "cell_type", label = T)
 ```
 
 ### scEnrichment
 
 ``` r
 markers = FindMarkers(rna, ident.1 = 0, only.pos = T, logfc.threshold = 0.5)
-cellid.input = data.frame(gene = rownames(markers), logFC = markers$avg_log2FC)
-cellid.res = CELLiDEnrichment(cellid.input)
+cellid_input = data.frame(gene = rownames(markers), logFC = markers$avg_log2FC)
+cellid_res = CELLiDEnrichment(cellid_input)
 
 # also it will download 'ref_geneset.rds' in 'DISCOtmp' folder by default,
 # You can reuse this data for subsequent CELLiDEnrichment analyses as follow:
 ref = readRDS("DISCOtmp/ref_geneset.rds")
-cellid.res = CELLiDEnrichment(cellid.input, reference = ref)
+cellid_res = CELLiDEnrichment(cellid_input, reference = ref)
 ```

@@ -2,25 +2,22 @@
 % Please edit documentation in R/DownloadDiscoData.R
 \name{DownloadDiscoData}
 \alias{DownloadDiscoData}
-\title{Download data from DISCO database}
+\title{Download data from DISCO database using the filtered metadata}
 \usage{
-DownloadDiscoData(metadata, output.dir = "DISCOtmp")
+DownloadDiscoData(metadata, output_dir = "DISCOtmp")
 }
 \arguments{
-\item{cell.type}{The cell type of the input, which may be a string or a list of string}
+\item{metadata}{The resulting metadata object produced by FilterDiscoMetadata function}
 
-\item{cell.ontology}{The cell type ontology. If not specified, the cell type ontology will be retrieved from the DISCO database.}
-}
-\value{
-List of cell type
+\item{output_dir}{The directory where the downloaded files will be stored}
 }
 \description{
-Download data from DISCO database
+Download data from DISCO database using the filtered metadata
 }
 \examples{
-# Get children of B cell
-GetCellTypeChildren(cell.type = c("B cell"))
-
-# Get children of B cell and Macrophage
-GetCellTypeChildren(cell.type = c("B cell", "Macrophage"))
+# Download the data from project 'GSE174748' and store it in the 'disco_data' directory
+metadata = FilterDiscoMetadata(
+  project = "GSE174748"
+)
+DownloadDiscoData(metadata, output_dir = "disco_data")
 }
