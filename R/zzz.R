@@ -1,7 +1,7 @@
 .onAttach <- function(libname, pkgname) {
 
   tryCatch({
-    if(packageVersion("DISCOtoolkit") == fromJSON("http://www.immunesinglecell.org/api/vishuo/getToolkitVersion")$version) {
+    if(packageVersion("DISCOtoolkit") == fromJSON("https://www.immunesinglecell.org/disco_v3_api/getToolkitVersion")$version) {
       packageStartupMessage("Welcome to DISCOtoolkit.")
     } else {
       packageStartupMessage("A new version of DISCOtoolkit is available. Please update to ensure all functions work properly.")
