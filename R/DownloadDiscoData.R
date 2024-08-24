@@ -48,6 +48,7 @@ DownloadDiscoData <- function(metadata, output_dir = "DISCOtmp") {
     }
     saveRDS(rna, output_file)
     cell_type_list[[i]] = cell
+    closeAllConnections()
     pb$tick()
   }
 
