@@ -1,4 +1,5 @@
 # DISCOtoolkit 1.1.0 (Jun 11, 2024)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13984774.svg)](https://zenodo.org/badge/DOI/10.5281/zenodo.13984774.svg)
 
 DISCOtoolkit is an R package that provides access to data and tools from the [DISCO database](https://www.immunesinglecell.org/). Its functions include:
 
