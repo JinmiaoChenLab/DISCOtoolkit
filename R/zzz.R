@@ -1,7 +1,7 @@
 .onAttach <- function(libname, pkgname) {
 
   tryCatch({
-    if(packageVersion("DISCOtoolkit") == fromJSON("https://www.immunesinglecell.org/disco_v3_api/getToolkitVersion")$version) {
+    if(packageVersion("DISCOtoolkit") == fromJSON("https://disco.bii.a-star.edu.sg/disco_v3_api/getToolkitVersion")$version) {
       packageStartupMessage("Welcome to DISCOtoolkit.")
     } else {
       packageStartupMessage("A new version of DISCOtoolkit is available. Please update to ensure all functions work properly.")
@@ -15,7 +15,7 @@
   op <- options()
 
   op.disco <-  list(
-    disco_url = "https://immunesinglecell.org/disco_v3_api/",
+    disco_url = "https://disco.bii.a-star.edu.sg/disco_v3_api/",
     timeout = 6000
   )
 
