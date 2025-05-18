@@ -30,8 +30,27 @@ DownloadDiscoData <- function(metadata, output_dir = "DISCOtmp") {
   cell_type_list = list()
   message("Start downloading")
   for (i in 1:nrow(samples)) {
-    output_file = paste0(output_dir, "/", samples$sample_id[i], ".rds")
-    rna = readRDS(url(paste0(getOption("disco_url"), "download/getRawMtxRds/",samples$project_id[i],"/", samples$sample_id[i])))
+    output_file = paste0(output_dir, "/", samples$sample_id[i], ".h5")
+
+    h5_url      <- paste0(
+      getOption("disco_url"),
+      "download/getRawH5/",
+      samples$project_id[i], "/",
+      samples$sample_id[i]
+    )
+    local_h5    <- file.path(output_dir, paste0(samples$sample_id[i], ".h5"))
+
+    # download .h5 if it doesn't already exist
+
+    download.file(h5_url, destfile = local_h5, mode = "wb")
+
+    rna <- Seurat::Read10X_h5(local_h5)
+
+    # 删除刚刚下载的 .h5 文件
+    if (file.exists(local_h5)) {
+      file.remove(local_h5)
+    }
+
     cell = read.csv(paste0(getOption("disco_url"), "toolkit/getCellTypeSample?sampleId=", samples$sample_id[i]), sep = "\t")
     rownames(cell) = cell$cell_id
     cell = cell[,c(3,6)]
@@ -46,6 +65,7 @@ DownloadDiscoData <- function(metadata, output_dir = "DISCOtmp") {
 
       rna = rna[,rownames(cell),drop=F]
     }
+
     saveRDS(rna, output_file)
     cell_type_list[[i]] = cell
     closeAllConnections()
